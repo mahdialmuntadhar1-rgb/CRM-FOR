@@ -3,17 +3,22 @@ import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { existsSync } from 'node:fs';
 
 const currentFileDir = dirname(fileURLToPath(import.meta.url));
+const repoRoot = resolve(currentFileDir, '..');
+const explicitEnvFile = process.env.ENV_FILE ? resolve(process.cwd(), process.env.ENV_FILE) : null;
 const candidateEnvFiles = [
+  explicitEnvFile,
+  resolve(repoRoot, '.env'),
+  resolve(repoRoot, '.env.local'),
   resolve(process.cwd(), '.env'),
   resolve(process.cwd(), '.env.local'),
-  resolve(currentFileDir, '../.env'),
-  resolve(currentFileDir, '../.env.local'),
-];
+].filter((path): path is string => Boolean(path));
 
-for (const [index, envFile] of candidateEnvFiles.entries()) {
-  dotenv.config({ path: envFile, override: index > 0 });
+for (const envFile of candidateEnvFiles) {
+  if (!existsSync(envFile)) continue;
+  dotenv.config({ path: envFile, override: false });
 }
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
