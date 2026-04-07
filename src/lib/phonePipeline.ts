@@ -3,7 +3,7 @@ export const IRAQ_MOBILE_PREFIX = '7';
 export const IRAQ_LOCAL_LENGTH = 11; // 07XXXXXXXXX
 export const IRAQ_INTL_LENGTH = 13; // 9647XXXXXXXXX
 
-export type PhoneFieldName = 'whatsapp' | 'phone' | 'phone_1' | 'phone_2';
+export type PhoneFieldName = 'whatsapp' | 'phone' | 'phone1' | 'phone2' | 'phone_1' | 'phone_2';
 
 export interface NormalizedPhoneResult {
   input: string | null | undefined;
@@ -70,7 +70,7 @@ export function normalizeIraqiPhone(input: string | null | undefined): Normalize
 }
 
 export function selectBestBusinessPhone(fields: BusinessPhoneFields): SelectedPhoneResult {
-  const priority: PhoneFieldName[] = ['whatsapp', 'phone', 'phone_1', 'phone_2'];
+  const priority: PhoneFieldName[] = ['whatsapp', 'phone', 'phone1', 'phone2', 'phone_1', 'phone_2'];
   const normalizationByField = priority.reduce((acc, fieldName) => {
     acc[fieldName] = normalizeIraqiPhone(fields[fieldName]);
     return acc;

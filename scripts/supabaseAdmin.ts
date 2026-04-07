@@ -45,14 +45,33 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
   },
 });
 
-export const PHONE_FIELDS = ['whatsapp', 'phone', 'phone_1', 'phone_2'] as const;
+export const PHONE_FIELDS = ['whatsapp', 'phone', 'phone1', 'phone2', 'phone_1', 'phone_2'] as const;
 export type PhoneField = (typeof PHONE_FIELDS)[number];
+
+const PHONE_FIELD_PRIORITY: PhoneField[] = ['whatsapp', 'phone', 'phone1', 'phone2', 'phone_1', 'phone_2'];
+
+export async function resolveExistingBusinessPhoneFields() {
+  const { data, error } = await supabaseAdmin
+    .from('information_schema.columns')
+    .select('column_name')
+    .eq('table_schema', 'public')
+    .eq('table_name', 'businesses');
+
+  if (error) {
+    throw new Error(`Cannot inspect businesses schema: ${error.message}`);
+  }
+
+  const existingColumns = new Set((data || []).map((row: { column_name: string }) => row.column_name));
+  return PHONE_FIELD_PRIORITY.filter((field) => existingColumns.has(field));
+}
 
 export interface BusinessRow {
   id: string;
   name?: string | null;
   whatsapp?: string | null;
   phone?: string | null;
+  phone1?: string | null;
+  phone2?: string | null;
   phone_1?: string | null;
   phone_2?: string | null;
   normalized_phone?: string | null;

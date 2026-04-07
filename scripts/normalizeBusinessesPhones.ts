@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { supabaseAdmin, parseArgs, PHONE_FIELDS, BusinessRow } from './supabaseAdmin';
+import { supabaseAdmin, parseArgs, BusinessRow, resolveExistingBusinessPhoneFields } from './supabaseAdmin';
 import { selectBestBusinessPhone } from '../src/lib/phonePipeline';
 
 async function run() {
@@ -7,18 +7,7 @@ async function run() {
   const dryRun = args.get('dry-run') !== 'false';
   const limit = Number(args.get('limit') || 0);
 
-  const { data: columns, error: columnsError } = await supabaseAdmin
-    .from('information_schema.columns')
-    .select('column_name')
-    .eq('table_schema', 'public')
-    .eq('table_name', 'businesses');
-
-  if (columnsError) {
-    throw new Error(`Cannot inspect businesses schema: ${columnsError.message}`);
-  }
-
-  const columnSet = new Set((columns || []).map((c: { column_name: string }) => c.column_name));
-  const existingPhoneFields = PHONE_FIELDS.filter((field) => columnSet.has(field));
+  const existingPhoneFields = await resolveExistingBusinessPhoneFields();
 
   if (existingPhoneFields.length === 0) {
     throw new Error('No phone fields found in businesses table.');
