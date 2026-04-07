@@ -35,5 +35,7 @@ These scripts use Supabase directly as source-of-truth (no CSV flow):
 5. Create queue from validated phones only:
    - Tiny safe test (max 3):
      `npm run queue:create -- --campaign-id=<id> --template-id=<id> --tiny-test=true --dry-run=false --message="Hello {{business_name}}"`
+6. Verify tiny queue rows were created with valid normalized Iraqi mobile numbers:
+   - `npm run queue:verify -- --campaign-id=<id> --template-id=<id> --expected-count=3`
 
 Normalization output format is E.164 Iraqi mobile: `+9647XXXXXXXXX`.

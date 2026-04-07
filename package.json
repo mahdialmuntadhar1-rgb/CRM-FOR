@@ -12,7 +12,8 @@
     "audit:phones": "tsx scripts/auditPhones.ts",
     "normalize:phones": "tsx scripts/normalizeBusinessesPhones.ts",
     "preview:audience": "tsx scripts/previewAudience.ts",
-    "queue:create": "tsx scripts/createCampaignQueue.ts"
+    "queue:create": "tsx scripts/createCampaignQueue.ts",
+    "queue:verify": "tsx scripts/verifyQueueRows.ts"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
