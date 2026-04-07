@@ -8,7 +8,11 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "audit:phones": "tsx scripts/auditPhones.ts",
+    "normalize:phones": "tsx scripts/normalizeBusinessesPhones.ts",
+    "preview:audience": "tsx scripts/previewAudience.ts",
+    "queue:create": "tsx scripts/createCampaignQueue.ts"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
