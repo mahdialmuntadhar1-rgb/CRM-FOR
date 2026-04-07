@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { supabaseAdmin, PHONE_FIELDS, BusinessRow } from './supabaseAdmin';
+import { supabaseAdmin, PHONE_FIELDS, BusinessRow, resolveExistingBusinessPhoneFields } from './supabaseAdmin';
 import { normalizeIraqiPhone, selectBestBusinessPhone } from '../src/lib/phonePipeline';
 
 interface SchemaColumnRow {
@@ -46,9 +46,7 @@ async function runAudit() {
   const businessesColumns = await fetchTableColumns('businesses');
   const messagesColumns = await fetchTableColumns('messages');
 
-  const existingPhoneFields = PHONE_FIELDS.filter((phoneField) =>
-    businessesColumns.some((col) => col.column_name === phoneField),
-  );
+  const existingPhoneFields = await resolveExistingBusinessPhoneFields();
 
   if (existingPhoneFields.length === 0) {
     throw new Error('No expected phone fields found on businesses table.');
