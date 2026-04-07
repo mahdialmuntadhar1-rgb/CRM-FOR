@@ -2,8 +2,18 @@
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 
-dotenv.config({ path: '.env' });
-dotenv.config({ path: '.env.local', override: true });
+const ENV_FILES = [
+  '.env',
+  '.env.local',
+  '.env.development',
+  '.env.development.local',
+  '.env.production',
+  '.env.production.local',
+];
+
+for (const file of ENV_FILES) {
+  dotenv.config({ path: file, override: false });
+}
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
