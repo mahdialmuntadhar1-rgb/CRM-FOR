@@ -316,6 +316,22 @@ async function generatePosts(
 async function insertPosts(client: SupabaseClient, posts: GeneratedPost[]): Promise<void> {
   console.log('💾 Inserting posts to database...\n');
   
+  // Try to get existing columns first
+  console.log('  Checking table schema...');
+  const { data: sampleData, error: sampleError } = await client
+    .from('posts')
+    .select('*')
+    .limit(1);
+  
+  let existingColumns: string[] = [];
+  if (sampleData && sampleData.length > 0) {
+    existingColumns = Object.keys(sampleData[0]);
+    console.log(`  Found columns: ${existingColumns.join(', ')}`);
+  } else if (sampleError && sampleError.message.includes('does not exist')) {
+    console.error('  ❌ posts table does not exist');
+    return;
+  }
+  
   const batchSize = 10;
   let success = 0;
   let failed = 0;
@@ -324,7 +340,54 @@ async function insertPosts(client: SupabaseClient, posts: GeneratedPost[]): Prom
     const batch = posts.slice(i, i + batchSize);
     const batchNum = Math.floor(i / batchSize) + 1;
     
-    const { error } = await client.from('posts').insert(batch);
+    // Prepare batch with only existing columns
+    const preparedBatch = batch.map(post => {
+      const prepared: any = {};
+      
+      // Map fields to columns - support both snake_case and camelCase
+      if (!existingColumns.length || existingColumns.includes('business_id')) prepared.business_id = post.business_id;
+      if (!existingColumns.length || existingColumns.includes('businessId')) prepared.businessId = post.business_id;
+      
+      if (!existingColumns.length || existingColumns.includes('display_name')) prepared.display_name = post.display_name;
+      if (!existingColumns.length || existingColumns.includes('businessName')) prepared.businessName = post.display_name;
+      
+      if (!existingColumns.length || existingColumns.includes('caption_ar')) prepared.caption_ar = post.caption_ar;
+      if (!existingColumns.length || existingColumns.includes('caption')) prepared.caption = post.caption_ar;
+      if (!existingColumns.length || existingColumns.includes('content')) prepared.content = post.caption_ar;
+      
+      if (!existingColumns.length || existingColumns.includes('caption_en')) prepared.caption_en = post.caption_en;
+      
+      if (!existingColumns.length || existingColumns.includes('image_url')) prepared.image_url = post.image_url;
+      if (!existingColumns.length || existingColumns.includes('imageUrl')) prepared.imageUrl = post.image_url;
+      
+      if (!existingColumns.length || existingColumns.includes('image_prompt')) prepared.image_prompt = post.image_prompt;
+      
+      if (!existingColumns.length || existingColumns.includes('category')) prepared.category = post.category;
+      
+      if (!existingColumns.length || existingColumns.includes('governorate')) prepared.governorate = post.governorate;
+      
+      if (!existingColumns.length || existingColumns.includes('raw_phone')) prepared.raw_phone = post.raw_phone;
+      if (!existingColumns.length || existingColumns.includes('normalized_phone')) prepared.normalized_phone = post.normalized_phone;
+      if (!existingColumns.length || existingColumns.includes('whatsapp_phone')) prepared.whatsapp_phone = post.whatsapp_phone;
+      
+      if (!existingColumns.length || existingColumns.includes('post_style')) prepared.post_style = post.post_style;
+      
+      if (!existingColumns.length || existingColumns.includes('featured')) prepared.featured = post.featured;
+      
+      // Set defaults for required fields that might be missing
+      if (!existingColumns.length || existingColumns.includes('isVerified')) prepared.isVerified = false;
+      if (!existingColumns.length || existingColumns.includes('likes')) prepared.likes = 0;
+      if (!existingColumns.length || existingColumns.includes('businessAvatar')) prepared.businessAvatar = null;
+      
+      // Always set published timestamp
+      if (!existingColumns.length || existingColumns.includes('published_at')) prepared.published_at = new Date().toISOString();
+      if (!existingColumns.length || existingColumns.includes('createdAt')) prepared.createdAt = new Date().toISOString();
+      if (!existingColumns.length || existingColumns.includes('created_at')) prepared.created_at = new Date().toISOString();
+      
+      return prepared;
+    });
+    
+    const { error } = await client.from('posts').insert(preparedBatch);
     
     if (error) {
       console.error(`  ❌ Batch ${batchNum} failed: ${error.message}`);

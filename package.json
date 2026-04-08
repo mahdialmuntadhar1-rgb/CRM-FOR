@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "migrate": "tsx scripts/migrate-supabase.ts"
+    "migrate": "tsx scripts/migrate-supabase.ts",
+    "db:setup": "tsx scripts/setup-database.ts",
+    "generate:posts": "tsx scripts/generate-shakumaku-posts.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
