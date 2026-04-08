@@ -1,9 +1,9 @@
 import { supabase } from '../lib/supabase';
 
 interface SendPayload {
-  messageId: string;
-  phone: string;
-  text: string;
+  messageId?: string;
+  phone?: string;
+  text?: string;
 }
 
 export const nabdaAdapter = {

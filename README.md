@@ -29,6 +29,7 @@ Do **not** point this CRM to Belive or any other Supabase project.
 Run migrations in order:
 1. `supabase/migrations/20260407_add_phone_normalization_fields.sql`
 2. `supabase/migrations/20260408_crm_core_tables.sql`
+3. `supabase/migrations/20260408_fix_crm_schema_and_ops.sql`
 
 ## Nabda integration
 - Frontend queues messages into `messages`.
@@ -45,3 +46,21 @@ Accepted Iraqi mobile inputs are normalized to `+9647XXXXXXXXX`:
 - `+9647xxxxxxxxx`
 
 Invalid/duplicate numbers are marked and excluded from sending.
+
+
+## Edge functions to deploy
+Deploy these to enable diagnostics and sending:
+- `crm-health`
+- `nabda-send`
+- `nabda-queue-processor`
+- `nabda-webhook`
+
+Example:
+```bash
+supabase functions deploy crm-health
+supabase functions deploy nabda-send
+supabase functions deploy nabda-queue-processor
+supabase functions deploy nabda-webhook
+```
+
+Webhook endpoint: `https://<project-ref>.supabase.co/functions/v1/nabda-webhook`

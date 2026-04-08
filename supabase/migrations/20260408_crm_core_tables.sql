@@ -1,3 +1,5 @@
+create extension if not exists pgcrypto;
+
 create table if not exists public.message_templates (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -41,6 +43,11 @@ create table if not exists public.send_logs (
   provider text not null default 'nabda',
   provider_message_id text,
   details text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.contacts (
+  id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now()
 );
 

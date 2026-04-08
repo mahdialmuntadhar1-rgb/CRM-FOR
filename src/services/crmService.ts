@@ -2,6 +2,16 @@ import { supabase } from '../lib/supabase';
 import { normalizeBusinessName, normalizeIraqiPhone, renderTemplate } from '../lib/crmTransformers';
 import { Campaign, Contact, MessageQueueItem, MessageTemplate, RecipientFilter, SendLog, SendMode } from '../types/crm';
 
+
+function throwIfError(error: any, table?: string) {
+  if (!error) return;
+  const raw = error.message || String(error);
+  if (raw.includes('schema cache') || raw.includes('does not exist') || raw.includes('relation')) {
+    throw new Error(`Missing required CRM table${table ? ` (${table})` : ''}: ${raw}. Run the CRM schema migration in Supabase.`);
+  }
+  throw error;
+}
+
 const TABLES = {
   contacts: 'contacts',
   templates: 'message_templates',
@@ -13,7 +23,7 @@ const TABLES = {
 export const crmService = {
   async getTemplates() {
     const { data, error } = await supabase.from(TABLES.templates).select('*').order('updated_at', { ascending: false });
-    if (error) throw error;
+    throwIfError(error, TABLES.templates);
     return (data || []) as MessageTemplate[];
   },
 
@@ -27,7 +37,7 @@ export const crmService = {
     };
 
     const { data, error } = await supabase.from(TABLES.templates).upsert(body).select().single();
-    if (error) throw error;
+    throwIfError(error, TABLES.templates);
 
     if (payload.is_active) {
       await supabase.from(TABLES.templates).update({ is_active: false }).neq('id', data.id);
@@ -39,12 +49,12 @@ export const crmService = {
 
   async deleteTemplate(id: string) {
     const { error } = await supabase.from(TABLES.templates).delete().eq('id', id);
-    if (error) throw error;
+    throwIfError(error, TABLES.templates);
   },
 
   async getContacts() {
     const { data, error } = await supabase.from(TABLES.contacts).select('*').order('created_at', { ascending: false }).limit(5000);
-    if (error) throw error;
+    throwIfError(error, TABLES.contacts);
     return (data || []) as Contact[];
   },
 
@@ -68,7 +78,7 @@ export const crmService = {
 
     if (!updates.length) return 0;
     const { error } = await supabase.from(TABLES.contacts).upsert(updates);
-    if (error) throw error;
+    throwIfError(error, TABLES.contacts);
     return updates.length;
   },
 
@@ -156,7 +166,7 @@ export const crmService = {
       .select()
       .single();
 
-    if (campaignError) throw campaignError;
+    throwIfError(campaignError, TABLES.campaigns);
 
     const rows = params.contacts
       .filter((c) => c.normalized_phone)
@@ -172,7 +182,7 @@ export const crmService = {
 
     if (rows.length) {
       const { error: queueError } = await supabase.from(TABLES.messages).insert(rows);
-      if (queueError) throw queueError;
+      throwIfError(queueError, TABLES.messages);
     }
 
     return campaign as Campaign;
@@ -184,8 +194,8 @@ export const crmService = {
       supabase.from(TABLES.sendLogs).select('*').order('created_at', { ascending: false }).limit(200),
     ]);
 
-    if (msgError) throw msgError;
-    if (logError) throw logError;
+    throwIfError(msgError, TABLES.messages);
+    throwIfError(logError, TABLES.sendLogs);
 
     return {
       messages: (messages || []) as MessageQueueItem[],
