@@ -1,4 +1,5 @@
 import { Contact } from '../types/crm';
+import { normalizeIraqiPhone as normalizePipelinePhone } from './phonePipeline';
 
 export function normalizeBusinessName(original: string | null | undefined): string | null {
   if (!original) return null;
@@ -13,24 +14,12 @@ export interface PhoneNormalizationResult {
 }
 
 export function normalizeIraqiPhone(raw: string | null | undefined): PhoneNormalizationResult {
-  if (!raw || !raw.trim()) return { normalized: null, isValid: false, reason: 'missing' };
-
-  const digits = raw.replace(/[^\d+]/g, '').replace(/^(00)+/, '').replace(/\D/g, '');
-  if (!digits) return { normalized: null, isValid: false, reason: 'no_digits' };
-
-  if (/^07\d{9}$/.test(digits)) {
-    return { normalized: `+964${digits.slice(1)}`, isValid: true, reason: null };
-  }
-
-  if (/^7\d{9}$/.test(digits)) {
-    return { normalized: `+964${digits}`, isValid: true, reason: null };
-  }
-
-  if (/^9647\d{9}$/.test(digits)) {
-    return { normalized: `+${digits}`, isValid: true, reason: null };
-  }
-
-  return { normalized: null, isValid: false, reason: 'unsupported_iraq_mobile_format' };
+  const result = normalizePipelinePhone(raw);
+  return {
+    normalized: result.normalized,
+    isValid: result.isValid,
+    reason: result.reason,
+  };
 }
 
 export function renderTemplate(templateBody: string, contact: Partial<Contact>): string {

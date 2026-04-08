@@ -30,6 +30,29 @@ Run migrations in order:
 1. `supabase/migrations/20260407_add_phone_normalization_fields.sql`
 2. `supabase/migrations/20260408_crm_core_tables.sql`
 3. `supabase/migrations/20260408_fix_crm_schema_and_ops.sql`
+4. `supabase/migrations/20260408_add_contact_import_audit_fields.sql`
+
+
+## Cross-database recipient import (server-side only)
+Use the migration script to import recipients from a separate source Supabase project into the locked CRM project.
+
+Required environment variables:
+- `SOURCE_SUPABASE_URL`
+- `SOURCE_SUPABASE_SERVICE_ROLE_KEY`
+- `TARGET_SUPABASE_SERVICE_ROLE_KEY` (or `SUPABASE_SERVICE_ROLE_KEY`)
+- Optional: `TARGET_SUPABASE_URL` (must stay `https://ujdsxzvvgaugypwtugdl.supabase.co`)
+
+Run in dry-run mode first:
+```bash
+npm run migrate:recipients -- --source-tables=businesses,contacts
+```
+
+Run write mode:
+```bash
+npm run migrate:recipients -- --source-tables=businesses,contacts --dry-run=false
+```
+
+The importer is idempotent via upsert conflict key: `(source_project, source_table, source_record_id)`.
 
 ## Nabda integration
 - Frontend queues messages into `messages`.
