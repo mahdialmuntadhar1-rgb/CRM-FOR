@@ -14,7 +14,8 @@
     "preview:audience": "tsx scripts/previewAudience.ts",
     "queue:create": "tsx scripts/createCampaignQueue.ts",
     "queue:verify": "tsx scripts/verifyQueueRows.ts",
-    "pipeline:e2e": "tsx scripts/runPhonePipelineE2E.ts"
+    "pipeline:e2e": "tsx scripts/runPhonePipelineE2E.ts",
+    "migrate:recipients": "tsx scripts/migrateRecipientsToCrm.ts"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
