@@ -3,6 +3,7 @@ import { crmService } from '../services/crmService';
 import { computeNormalizationStats, normalizeIraqiPhone, renderTemplate } from '../lib/crmTransformers';
 import { crmSupabaseProject } from '../lib/supabase';
 import { nabdaAdapter } from '../services/nabdaAdapter';
+import { healthService, HealthCheckResult } from '../services/healthService';
 import { Contact, MessageQueueItem, MessageTemplate, RecipientFilter, SendLog, SendMode } from '../types/crm';
 
 type TabKey = 'overview' | 'templates' | 'recipients' | 'test' | 'campaigns' | 'logs' | 'inbox' | 'settings';
@@ -45,6 +46,7 @@ export default function CRMConsole() {
   const [testPhone, setTestPhone] = useState(localStorage.getItem('crm_test_phone') || '');
   const [campaignName, setCampaignName] = useState('Nabda WhatsApp Campaign');
   const [saving, setSaving] = useState(false);
+  const [health, setHealth] = useState<HealthCheckResult | null>(null);
 
   const [draftTemplate, setDraftTemplate] = useState<Partial<MessageTemplate>>({ name: '', body: '', is_active: false });
 
@@ -73,19 +75,35 @@ export default function CRMConsole() {
     setLoading(true);
     setError('');
     try {
-      const [cts, tpls, queueAndLogs] = await Promise.all([
+      const [cts, tpls, queueAndLogs, healthResult] = await Promise.all([
         crmService.getContacts(),
         crmService.getTemplates(),
         crmService.getQueueAndLogs(),
+        healthService.run(),
       ]);
       setContacts(cts);
       setTemplates(tpls);
       setQueue(queueAndLogs.messages);
       setLogs(queueAndLogs.logs);
+      setHealth(healthResult);
     } catch (e: any) {
-      setError(e.message || 'Failed to load CRM data. Confirm Supabase tables exist.');
+      const msg = e?.message || 'Failed to load CRM data. Confirm Supabase tables exist.';
+      if (String(msg).includes('schema cache') || String(msg).includes('relation') || String(msg).includes('does not exist')) {
+        setError(`CRM schema error: ${msg}. Run the latest SQL migration in Supabase for this CRM project.`);
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
+    }
+  }
+
+
+  async function runHealthCheck() {
+    try {
+      setHealth(await healthService.run());
+    } catch (e: any) {
+      setError(e.message || 'Health check failed');
     }
   }
 
@@ -179,11 +197,32 @@ export default function CRMConsole() {
       </nav>
 
       {activeTab === 'overview' && (
-        <section className="grid md:grid-cols-4 gap-3">
-          <Stat title="Total numbers" value={normalizationStats.total} />
-          <Stat title="Valid normalized" value={normalizationStats.valid} />
-          <Stat title="Invalid" value={normalizationStats.invalid} />
-          <Stat title="Duplicates removed" value={normalizationStats.duplicates} />
+        <section className="space-y-3">
+          <div className="grid md:grid-cols-4 gap-3">
+            <Stat title="Total numbers" value={normalizationStats.total} />
+            <Stat title="Valid normalized" value={normalizationStats.valid} />
+            <Stat title="Invalid" value={normalizationStats.invalid} />
+            <Stat title="Duplicates removed" value={normalizationStats.duplicates} />
+          </div>
+          <div className="bg-white border rounded-2xl p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold">Admin readiness checklist</h2>
+              <button className="text-sm border rounded px-2 py-1" onClick={runHealthCheck}>Refresh checks</button>
+            </div>
+            {!health && <p className="text-sm text-slate-600 mt-2">Health check unavailable. Verify edge function <code>crm-health</code> is deployed.</p>}
+            {health && (
+              <ul className="mt-3 space-y-1 text-sm">
+                <li>{health.supabase.urlMatchesLockedProject ? '✅' : '❌'} Supabase project URL locked to {crmSupabaseProject}</li>
+                <li>{health.tables.every((t) => t.ok) ? '✅' : '❌'} Required tables found ({health.tables.filter((t) => t.ok).length}/{health.tables.length})</li>
+                <li>{health.env.NABDA_API_URL && health.env.NABDA_INSTANCE_ID && health.env.NABDA_API_TOKEN ? '✅' : '❌'} Nabda server env vars configured</li>
+                <li>{health.tables.some((t) => t.table === 'webhook_events' && t.ok) ? '✅' : '❌'} Webhook storage table configured</li>
+                <li>{health.ok ? '✅' : '⚠️'} Test send ready</li>
+              </ul>
+            )}
+            {health?.missingTables?.length ? (
+              <p className="text-sm text-red-600 mt-2">Missing tables: {health.missingTables.map((t) => t.table).join(', ')}</p>
+            ) : null}
+          </div>
         </section>
       )}
 
@@ -261,7 +300,29 @@ export default function CRMConsole() {
           />
           <p className="text-sm text-slate-600">Normalized: {normalizeIraqiPhone(testPhone).normalized || 'Invalid'}</p>
           <div className="border rounded p-3 bg-slate-50 whitespace-pre-wrap">{preview || 'No preview yet. Select active template and at least one recipient.'}</div>
-          <button className="px-4 py-2 rounded bg-green-600 text-white" onClick={() => { setSendMode('test_phone_only'); queueCampaign(); }} disabled={saving}>Queue test message to my phone only</button>
+          <div className="flex gap-2">
+            <button className="px-4 py-2 rounded bg-green-600 text-white" onClick={() => { setSendMode('test_phone_only'); queueCampaign(); }} disabled={saving}>Queue test message to my phone only</button>
+            <button
+              className="px-4 py-2 rounded bg-slate-900 text-white"
+              disabled={saving || !normalizeIraqiPhone(testPhone).normalized || !preview}
+              onClick={async () => {
+                try {
+                  setSaving(true);
+                  await nabdaAdapter.sendSingle({ phone: normalizeIraqiPhone(testPhone).normalized || '', text: preview });
+                  const refreshed = await crmService.getQueueAndLogs();
+                  setQueue(refreshed.messages);
+                  setLogs(refreshed.logs);
+                  alert('Test send request submitted to Nabda. Check Send Logs tab.');
+                } catch (e: any) {
+                  alert(`Direct test send failed: ${e.message}`);
+                } finally {
+                  setSaving(false);
+                }
+              }}
+            >
+              Send test now (single number)
+            </button>
+          </div>
         </section>
       )}
 
