@@ -1,0 +1,17 @@
+{
+  "name": "supabase-migration",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "migrate": "tsx scripts/migrate-supabase.ts"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "@supabase/supabase-js": "^2.102.1",
+    "dotenv": "^16.6.1"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
