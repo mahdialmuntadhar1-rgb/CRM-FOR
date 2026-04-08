@@ -1,41 +1,47 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# WhatsApp CRM (Nabda Orchestrator)
 
-# Run and deploy your AI Studio app
+Production-focused React + TypeScript + Vite CRM for controlled WhatsApp bulk outreach.
 
-This contains everything you need to run your app locally.
+## Locked Supabase Project (CRM only)
+This app is intentionally locked to:
+- `https://ujdsxzvvgaugypwtugdl.supabase.co`
 
-View your app in AI Studio: https://ai.studio/apps/f0f0f80d-81d5-488a-a335-7fefb7139d2e
+Do **not** point this CRM to Belive or any other Supabase project.
 
-## Run Locally
+## Core dashboard areas
+- Overview
+- Templates
+- Recipients
+- Test Send
+- Campaigns / Queue
+- Send Logs
+- Inbox / Replies (placeholder)
+- Settings
 
-**Prerequisites:**  Node.js
+## Run locally
+1. `npm install`
+2. (Optional) set these env vars to the same locked project values:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+3. `npm run dev`
 
+## Minimal schema
+Run migrations in order:
+1. `supabase/migrations/20260407_add_phone_normalization_fields.sql`
+2. `supabase/migrations/20260408_crm_core_tables.sql`
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Nabda integration
+- Frontend queues messages into `messages`.
+- Actual sending should happen from server-side Supabase Edge Functions:
+  - `nabda-send`
+  - `nabda-queue-processor`
+- Keep Nabda secrets server-side only.
 
-## Supabase phone pipeline (backend)
+## Phone normalization
+Accepted Iraqi mobile inputs are normalized to `+9647XXXXXXXXX`:
+- `07xxxxxxxxx`
+- `7xxxxxxxxx`
+- `9647xxxxxxxxx`
+- `+9647xxxxxxxxx`
 
-These scripts use Supabase directly as source-of-truth (no CSV flow):
-
-1. Run schema migration (adds helper columns only, preserves raw phone values):
-   - `supabase/migrations/20260407_add_phone_normalization_fields.sql`
-2. Audit current phone quality and field usage:
-   - `npm run audit:phones`
-3. Normalize/select best phone and update helper columns:
-   - Dry run: `npm run normalize:phones -- --dry-run=true`
-   - Write mode: `npm run normalize:phones -- --dry-run=false`
-4. Preview valid audience only:
-   - `npm run preview:audience -- --limit=20`
-5. Create queue from validated phones only:
-   - Tiny safe test (max 3):
-     `npm run queue:create -- --campaign-id=<id> --template-id=<id> --tiny-test=true --dry-run=false --message="Hello {{business_name}}"`
-6. Verify tiny queue rows were created with valid normalized Iraqi mobile numbers:
-   - `npm run queue:verify -- --campaign-id=<id> --template-id=<id> --expected-count=3`
-
-Normalization output format is E.164 Iraqi mobile: `+9647XXXXXXXXX`.
+Invalid/duplicate numbers are marked and excluded from sending.

@@ -1,12 +1,21 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Fallback to placeholder values to prevent "supabaseUrl is required" error during initialization
-// when environment variables are not yet configured in AI Studio secrets.
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project-id.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
+const REQUIRED_URL = 'https://ujdsxzvvgaugypwtugdl.supabase.co';
+const REQUIRED_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXMiOiJzdXBhYmFzZSIsInJlZiI6InVqZHN4enZ2Z2F1Z3lwd3R1Z2RsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzQ3NjYsImV4cCI6MjA5MDk1MDc2Nn0.XlWRSUAFTBYq3udqmBSkXI2bA73MlyriC1nWuwP4C7c';
 
-if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-  console.warn('Supabase credentials missing. The app is using placeholder values. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment secrets.');
+const configuredUrl = import.meta.env.VITE_SUPABASE_URL || REQUIRED_URL;
+const configuredAnon = import.meta.env.VITE_SUPABASE_ANON_KEY || REQUIRED_ANON_KEY;
+
+if (configuredUrl !== REQUIRED_URL) {
+  console.error('Blocked: This CRM is locked to its dedicated Supabase project URL.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(REQUIRED_URL, configuredAnon, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  },
+});
+
+export const crmSupabaseProject = REQUIRED_URL;
