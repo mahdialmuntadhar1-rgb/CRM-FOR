@@ -1,0 +1,10 @@
+name = "whatsapp-crm-webhook"
+main = "functions/[[path]].ts"
+compatibility_date = "2024-04-09"
+
+[env.production]
+name = "whatsapp-crm-webhook"
+
+[[env.production.kv_namespaces]]
+binding = "CACHE"
+id = "whatsapp_crm_cache"
