@@ -1,0 +1,24 @@
+{
+  "name": "whatsapp-crm",
+  "version": "1.0.0",
+  "description": "WhatsApp CRM Bulk Messaging System for Iraq Business Outreach",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=@whatsapp-crm/api",
+    "dev:web": "npm run dev --workspace=@whatsapp-crm/web",
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "build": "npm run build --workspace=@whatsapp-crm/shared && npm run build --workspace=@whatsapp-crm/api && npm run build --workspace=@whatsapp-crm/web",
+    "lint": "npm run lint --workspace=@whatsapp-crm/web",
+    "db:migrate": "echo 'Run SQL files in sql/ against your Supabase project'"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
