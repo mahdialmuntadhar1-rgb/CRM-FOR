@@ -79,15 +79,17 @@ export async function fetchCampaigns(status?: string) {
 }
 
 export async function fetchCampaignStats(campaignId?: string) {
-  let query = supabase
-    .from('campaign_stats')
-    .select('*');
-  
   if (campaignId) {
-    query = query.eq('campaign_id', campaignId).single();
+    return supabase
+      .from('campaign_stats')
+      .select('*')
+      .eq('campaign_id', campaignId)
+      .single();
   }
   
-  return query;
+  return supabase
+    .from('campaign_stats')
+    .select('*');
 }
 
 export async function fetchConversations(search?: string) {
