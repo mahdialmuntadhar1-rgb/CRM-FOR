@@ -2,18 +2,25 @@
   "version": 2,
   "builds": [
     {
-      "src": "whatsapp-crm/index.html",
-      "use": "@vercel/static"
+      "src": "whatsapp-crm/apps/web/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
     }
   ],
   "routes": [
     {
-      "src": "/",
-      "dest": "/whatsapp-crm/index.html"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/whatsapp-crm/index.html"
+      "dest": "/whatsapp-crm/apps/web/index.html"
     }
-  ]
+  ],
+  "installCommand": "cd whatsapp-crm/apps/web && npm install",
+  "buildCommand": "cd whatsapp-crm/apps/web && npm run build",
+  "outputDirectory": "whatsapp-crm/apps/web/dist",
+  "env": {
+    "NODE_ENV": "production",
+    "VITE_SUPABASE_URL": "https://ujdsxzvvgaugypwtugdl.supabase.co",
+    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqZHN4enZ2Z2F1Z3lwd3R1Z2RsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzQ3NjYsImV4cCI6MjA5MDk1MDc2Nn0.XlWRSUAFTBYq3udqmBSkXI2bA73MlyriC1nWuwP4C7c"
+  }
 }
